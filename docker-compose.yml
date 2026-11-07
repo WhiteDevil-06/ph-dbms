@@ -1,0 +1,50 @@
+# ==============================================================================
+# Docker Compose for Local Development Databases
+# NOTE: Docker is currently not detected on this host. 
+# This file provides a standardized container environment if Docker Desktop is installed.
+# DO NOT start without configuring .env and validating local port availability.
+# ==============================================================================
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: post_harvest_mysql
+    restart: "no"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword_local}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-post_harvest_db}
+      MYSQL_USER: ${MYSQL_USER:-post_harvest_app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-apppassword_local}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/mysql/schema:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:8.0
+    container_name: post_harvest_mongodb
+    restart: "no"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:-adminpassword_local}
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-post_harvest_telemetry}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_data:
+  mongo_data:
+

@@ -61,10 +61,12 @@ class SimulationGenerator:
         self.profile: ScaleProfile = SCALE_PROFILES.get(scale, SCALE_PROFILES["demo"])
 
     def _generate_uuid(self, prefix: str) -> str:
-        """Generate deterministic UUID based on seed progression."""
+        """Generate deterministic UUID based on seed progression fitting within VARCHAR(36)."""
         raw_hex = f"{self.rng.getrandbits(128):032x}"
-        formatted = f"{raw_hex[:8]}-{raw_hex[8:12]}-{raw_hex[12:16]}-{raw_hex[16:20]}-{raw_hex[20:32]}"
-        return f"{prefix}-{formatted}"
+        formatted = f"{raw_hex[:8]}-{raw_hex[8:12]}-{raw_hex[12:24]}"
+        val = f"{prefix}-{formatted}"
+        assert len(val) <= 36, f"Generated ID {val} exceeds 36 chars"
+        return val
 
     def generate(self) -> GeneratedDataset:
         """Synthesize all post-harvest relational and document datasets."""

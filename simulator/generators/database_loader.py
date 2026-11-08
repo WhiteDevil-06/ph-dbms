@@ -4,6 +4,7 @@ import logging
 from typing import Dict, Any, Optional
 from sqlalchemy.orm import Session
 from pymongo.database import Database
+from pymongo.errors import BulkWriteError
 
 from backend.app.database.mysql import SessionLocal, check_mysql_connection
 from backend.app.database.mongodb import get_mongo_db, check_mongodb_connection
@@ -143,12 +144,22 @@ def insert_dataset_into_databases(
 
         try:
             if dataset.detections:
-                mongo_db["detections"].insert_many(dataset.detections, ordered=False)
-                records_inserted["detections"] = len(dataset.detections)
+                try:
+                    res = mongo_db["detections"].insert_many(dataset.detections, ordered=False)
+                    records_inserted["detections"] = len(res.inserted_ids)
+                except BulkWriteError as bwe:
+                    inserted = bwe.details.get("nInserted", 0)
+                    records_inserted["detections"] = inserted
+                    logger.info("MongoDB detections: inserted %d, duplicate keys skipped", inserted)
 
             if dataset.telemetry_logs:
-                mongo_db["telemetry_logs"].insert_many(dataset.telemetry_logs, ordered=False)
-                records_inserted["telemetry_logs"] = len(dataset.telemetry_logs)
+                try:
+                    res = mongo_db["telemetry_logs"].insert_many(dataset.telemetry_logs, ordered=False)
+                    records_inserted["telemetry_logs"] = len(res.inserted_ids)
+                except BulkWriteError as bwe:
+                    inserted = bwe.details.get("nInserted", 0)
+                    records_inserted["telemetry_logs"] = inserted
+                    logger.info("MongoDB telemetry_logs: inserted %d, duplicate keys skipped", inserted)
         except Exception as exc:
             logger.error("Error inserting MongoDB documents: %s", exc)
             raise

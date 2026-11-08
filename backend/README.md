@@ -31,7 +31,25 @@ backend/
 
 ---
 
-## 3. Local Development Setup (Windows 11)
+## 3. Implemented ORM Models (`backend/app/models/`)
+All models strictly mirror `database/mysql/schema/01_baseline_schema.sql` and the approved architecture decisions:
+- **`Session`**: Operational post-harvest sessions (`session_id`, `start_time`, `end_time`, `environment`, `session_status`, `notes`, `provenance`, timestamps).
+- **`AIModel`**: Model registry (`model_id`, `model_name`, `model_version`, `configuration`, `provenance`).
+- **`Device`**: Physical hardware registry (`device_id`, `device_name`, `device_type`, `device_status`, `description`, `provenance`).
+- **`Task`**: Autonomous handling tasks (`task_id`, `session_id`, `task_type`, `target_description`, `priority`, `creation_time`, `start_time`, `end_time`, `task_status`, `provenance`).
+- **`Decision`**: Operational decision logic (`decision_id`, `session_id`, `task_id`, `decision_time`, `decision_type`, `selected_action`, `rationale`, `input_reference`, `provenance`).
+- **`Operation`**: Physical robotic actuations (`operation_id`, `task_id`, `device_id`, `operation_type`, `start_time`, `end_time`, `operation_status`, `result`, `provenance`).
+- **`SystemEvent`**: Structured status and fault events (`event_id`, `device_id`, `operation_id`, `event_time`, `event_type`, `description`, `resolution_status`, `provenance`).
+
+---
+
+## 4. Database Connectors (`backend/app/database/`)
+- **`mysql.py`**: Configures SQLAlchemy engine with connection pooling (`pool_pre_ping=True`, `pool_recycle=3600`), `SessionLocal`, and a non-leaking connection check (`check_mysql_connection()`).
+- **`mongodb.py`**: Configures lazy PyMongo client, database accessor for `post_harvest_telemetry`, collections accessors (`detections`, `telemetry_logs`), and ping health check (`check_mongodb_connection()`).
+
+---
+
+## 5. Local Development Setup (Windows 11)
 
 ### Step 1: Create and Activate Virtual Environment
 ```powershell
@@ -55,9 +73,8 @@ Interactive API documentation will be available at:
 
 ---
 
-## 4. Running Automated Tests
+## 6. Running Automated Tests
 ```powershell
 pytest backend/tests -v
 ```
-All tests must execute against isolated test databases or mock fixtures. Never run destructive cleanup against primary development databases.
-
+All tests execute against isolated test databases or mock fixtures. Never run destructive cleanup against primary development databases.

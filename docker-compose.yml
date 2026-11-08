@@ -1,8 +1,8 @@
 # ==============================================================================
-# Docker Compose for Local Development Databases
+# Docker Compose for Local Development Databases and FastAPI Backend
 # Project: Intelligent Data Management and Operational Analytics for
 #          Autonomous Post-Harvest Material Handling Systems
-# Maintainer: Rakshith Raghavendra (Project Lead & Database Architect)
+# Maintainer: Rakshith Raghavendra (Project Lead & Database Architect) & Rahul
 # ==============================================================================
 
 services:
@@ -48,6 +48,46 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: post_harvest_backend
+    restart: "no"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=True
+      - LOG_LEVEL=INFO
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=8000
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-post_harvest_db}
+      - MYSQL_USER=${MYSQL_USER:-post_harvest_app}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-apppassword_local}
+      - DATABASE_URL=mysql+pymysql://${MYSQL_USER:-post_harvest_app}:${MYSQL_PASSWORD:-apppassword_local}@mysql:3306/${MYSQL_DATABASE:-post_harvest_db}
+      - MONGODB_HOST=mongodb
+      - MONGODB_PORT=27017
+      - MONGODB_DATABASE=${MONGODB_DATABASE:-post_harvest_telemetry}
+      - MONGODB_USER=${MONGODB_USER:-admin}
+      - MONGODB_PASSWORD=${MONGODB_PASSWORD:-adminpassword_local}
+      - MONGODB_URI=mongodb://${MONGODB_USER:-admin}:${MONGODB_PASSWORD:-adminpassword_local}@mongodb:27017/${MONGODB_DATABASE:-post_harvest_telemetry}?authSource=admin
+      - DATA_SOURCE_MODE=SIMULATION
+      - SIMULATION_DEFAULT_SEED=42
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   mysql_data:

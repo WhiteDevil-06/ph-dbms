@@ -77,6 +77,9 @@ services:
       - SIMULATION_DEFAULT_SEED=42
     ports:
       - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./simulator:/app/simulator
     depends_on:
       mysql:
         condition: service_healthy

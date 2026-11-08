@@ -98,3 +98,29 @@ def test_safe_purge_requires_confirmation():
     """Verify that reset_simulated_data rejects purge requests without explicit confirmation."""
     with pytest.raises(ValueError, match="Purge aborted"):
         reset_simulated_data(confirm=False)
+
+
+def test_all_relational_ids_fit_varchar_36():
+    """Verify all primary and foreign key IDs fit within MySQL VARCHAR(36) constraints."""
+    generator = SimulationGenerator(seed=42, scale="small")
+    ds = generator.generate()
+    for s in ds.sessions:
+        assert len(s["session_id"]) <= 36
+    for t in ds.tasks:
+        assert len(t["task_id"]) <= 36
+        assert len(t["session_id"]) <= 36
+    for d in ds.decisions:
+        assert len(d["decision_id"]) <= 36
+        assert len(d["session_id"]) <= 36
+        if d.get("task_id"):
+            assert len(d["task_id"]) <= 36
+    for o in ds.operations:
+        assert len(o["operation_id"]) <= 36
+        assert len(o["task_id"]) <= 36
+        assert len(o["device_id"]) <= 36
+    for e in ds.system_events:
+        assert len(e["event_id"]) <= 36
+        assert len(e["device_id"]) <= 36
+        if e.get("operation_id"):
+            assert len(e["operation_id"]) <= 36
+

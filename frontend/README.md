@@ -39,24 +39,44 @@ frontend/
 ## 3. Local Development Setup (Windows 11)
 
 ### Prerequisites:
-- Node.js LTS (v24.15.0+ installed)
-- npm (v11.6.2+ installed)
+- Node.js LTS (v20+ or v24+ installed)
+- npm (v10+ installed)
+- Docker Desktop (for running the backend and databases)
 
-### Step 1: Initialize Vite Project / Install Dependencies
+### Step 1: Start Backend Services (from Repository Root)
+```powershell
+# In the root repository directory, start MySQL, MongoDB, and FastAPI backend
+docker compose up -d
+
+# Verify backend health (returns {"status": "healthy"})
+curl http://localhost:8000/health
+```
+
+### Step 2: Initialize Vite Project / Install Dependencies
 ```powershell
 cd frontend
 npm install
 ```
 
-### Step 2: Run Development Server
+### Step 3: Run Development Server
 ```powershell
 npm run dev
 ```
-The dashboard will be accessible at: `http://localhost:5173`
+The dashboard will be accessible at: `http://localhost:5173`.
+Vite proxies `/api` and `/health` requests to `http://localhost:8000`.
 
 ---
 
-## 4. Linting and Production Build
+## 4. Backend Endpoints Available for Frontend
+- **System Health**: `GET /health` (connectivity status for MySQL & MongoDB)
+- **Simulation Status**: `GET /api/v1/simulation/status` (current counts of sessions, tasks, detections)
+- **Generate Data**: `POST /api/v1/simulation/generate` (payload: `{"seed": 42, "scale": "demo", "reset_first": false}`)
+- **Reset Data**: `POST /api/v1/simulation/reset` (payload: `{"confirm_purge": true, "purge_target": "SIMULATED_ONLY"}`)
+- **Interactive API Documentation**: `http://localhost:8000/docs`
+
+---
+
+## 5. Linting and Production Build
 ```powershell
 # Run ESLint
 npm run lint

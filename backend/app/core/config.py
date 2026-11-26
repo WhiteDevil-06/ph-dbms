@@ -29,6 +29,15 @@ class Settings(BaseSettings):
     SIMULATION_DEFAULT_SEED: int = 42
     ENABLE_SIMULATION_RESET: bool = True
 
+    # JWT Authentication & RBAC Security (DEC-08)
+    JWT_SECRET_KEY: str = "ph-dbms-local-dev-jwt-secret-key-change-in-production-0123456789"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 480  # 8 hours (full shift / extended session)
+    AUTH_RATE_LIMIT_MAX_ATTEMPTS: int = 5
+    AUTH_RATE_LIMIT_WINDOW_SECONDS: int = 300
+    DEFAULT_ADMIN_PASSWORD: str = "Admin@1234"
+    DEFAULT_OPERATOR_PASSWORD: str = "Operator@1234"
+
     # MySQL Database
     MYSQL_HOST: str = "localhost"
     MYSQL_PORT: int = 3306

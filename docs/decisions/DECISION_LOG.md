@@ -82,3 +82,17 @@
 - **Decision**: Standardize on `PyMySQL` (`mysql+pymysql://`) with `cryptography` for SQLAlchemy connections.
 - **Consequences**: 100% reproducible pure-Python installation on Windows without C++ compiler prerequisites.
 
+
+---
+
+### [DEC-08] JWT Authentication, 2-Role RBAC (`ADMIN` / `OPERATOR`), Server-Side Logout Revocation & Audit Trail
+- **Date**: 2026-11-26
+- **Status**: **CONFIRMED**
+- **Decider**: User & Project Team
+- **Context**: While initial prototype scope deferred authentication, operational security demonstration requires authenticated dashboard sessions, explicit logout, role differentiation, and verifiable security/validation proofs without introducing external auth infrastructure or Redis.
+- **Decision**:
+  1. **JWT Session Model**: Signed `HS256` JWTs (`PyJWT`) with an extended 8-hour (`480` minutes) TTL and unique `jti` claim.
+  2. **2-Role RBAC**: `ADMIN` (full simulation generation, destructive clear/purge reset, user & security audit log access) vs `OPERATOR` (monitoring and non-destructive dataset generation only; `HTTP 403` on purge/reset and admin views).
+  3. **Password & Revocation Storage (MySQL 8.4)**: Add additive tables `app_user` (salted PBKDF2-HMAC-SHA256 hashes, 600,000 iterations), `revoked_token` (server-side JWT logout denylist), and `auth_audit_log` (recording `LOGIN_SUCCESS`, `LOGIN_FAILED`, `LOGOUT`, `ACCESS_DENIED`, `RATE_LIMITED`).
+  4. **Defensive Validation & Headers**: Strict Pydantic v2 `extra="forbid"` schemas, username regex validation, failed-login rate limiting (`HTTP 429`), and security response headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Cache-Control: no-store` on `/api/v1/auth/*`).
+- **Consequences**: Enables real server-enforced logout and role differentiation inside the existing modular monolith with zero external infrastructure dependencies.

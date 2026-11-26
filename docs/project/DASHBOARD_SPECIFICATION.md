@@ -88,3 +88,13 @@ The dashboard provides operators, engineers, and researchers with real-time oper
   - **Device List**: `device_id`, `device_name`, `device_type`, `device_status` (Online/Offline/Calibrating/Fault), `description`.
   - **AI Model Catalog**: `model_id`, `model_name`, `model_version`, `configuration`, `created_at`.
 
+
+### Page 10: Sign-In (`/login`) & Security / Access Control (`/security`) (DEC-08)
+- **Sign-In Page (`/login`)**:
+  - Persistent `SIMULATION DATA ACTIVE` banner, live `/health` status pill, username/password JWT authentication form, and a clearly labeled Demo Role Accounts reference panel (`ADMIN` vs `OPERATOR`).
+- **Topbar Identity & Logout**:
+  - Displays the authenticated user's name, color-coded role badge (`ADMIN` or `OPERATOR`), and a **Log out** button calling `POST /api/v1/auth/logout` (server-side JWT revocation) before redirecting to `/login`.
+- **Security & Access Control (`/security`)**:
+  - **Active JWT Session Panel**: Displays principal name, role badge, `jti`, and 8-hour session expiration timestamp.
+  - **RBAC Permission Matrix**: Side-by-side comparison of `ADMIN` vs `OPERATOR` permissions.
+  - **Admin-Only Governance Sections**: Registered accounts table (excluding password hashes) and live Security & Auth Audit Log (`LOGIN_SUCCESS`, `LOGIN_FAILED`, `LOGOUT`, `ACCESS_DENIED`, `RATE_LIMITED`). Non-admin (`OPERATOR`) visitors see an explicit **HTTP 403 — Access Restricted** notice.

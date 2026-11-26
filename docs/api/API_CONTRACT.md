@@ -7,6 +7,7 @@
 - **Base URL Prefix**: `/api/v1`
 - **Format**: All requests and responses use `application/json; charset=utf-8`.
 - **CORS Allowed Origins**: Configured in `.env` (default `http://localhost:5173`, `http://127.0.0.1:5173`).
+- **Authentication & RBAC (DEC-08)**: All `/api/v1/*` operational endpoints (except `POST /api/v1/auth/login`) require `Authorization: Bearer <jwt>` signed with `HS256` (8-hour TTL). Two roles are enforced server-side: `ADMIN` and `OPERATOR`.
 - **Data Provenance**: Every response object containing operational or simulated telemetry includes a `provenance` field (`"SIMULATED"` or `"MANUAL_TEST"`).
 
 ---
@@ -46,7 +47,28 @@
     }
     ```
 
-### 3.2 Simulation Engine Management
+### 3.1A Authentication, JWT Sessions & RBAC (`/api/v1/auth`)
+- **`POST /api/v1/auth/login`** (Public; brute-force rate-limited → `429`)
+  - **Request Body**: `{ "username": "admin", "password": "<password>" }`
+  - **Response 200 OK**: `{ "access_token", "token_type": "bearer", "expires_in": 28800, "expires_at", "user": { "user_id", "username", "full_name", "role", "is_active", "permissions", "provenance", "created_at" } }`
+  - **Errors**: `401 Unauthorized` (generic `"Invalid username or password."`), `422 Unprocessable Entity`, `429 Too Many Requests`.
+- **`POST /api/v1/auth/logout`** (`ADMIN` & `OPERATOR`)
+  - **Description**: Revokes the caller's JWT `jti` server-side in MySQL `revoked_token` and records a `LOGOUT` audit event. Subsequent replays of the revoked token return `401 Unauthorized`.
+- **`GET /api/v1/auth/me`** (`ADMIN` & `OPERATOR`)
+  - **Description**: Returns the authenticated principal, role, granted permissions, `jti`, and `expires_at`.
+- **`GET /api/v1/auth/permissions-matrix`** (`ADMIN` & `OPERATOR`)
+  - **Description**: Returns the authoritative RBAC role differentiation matrix for `ADMIN` vs `OPERATOR`.
+- **`GET /api/v1/auth/users`** (`ADMIN` only; `403` for `OPERATOR`)
+  - **Description**: Returns registered accounts without `password_hash`.
+- **`GET /api/v1/auth/audit-logs`** (`ADMIN` only; `403` for `OPERATOR`)
+  - **Query Params**: `limit` (1–200, default 50).
+  - **Description**: Returns recent `LOGIN_SUCCESS`, `LOGIN_FAILED`, `LOGOUT`, `ACCESS_DENIED`, and `RATE_LIMITED` records.
+
+### 3.2 Simulation Engine Management (JWT Protected)
+- **RBAC Rules**:
+  - `GET /api/v1/simulation/status`: `ADMIN` & `OPERATOR` (`401` if unauthenticated)
+  - `POST /api/v1/simulation/generate`: `ADMIN` (full), `OPERATOR` (`reset_first=false` only; `reset_first=true` returns `403 Forbidden`)
+  - `POST /api/v1/simulation/reset`: `ADMIN` only (`403 Forbidden` for `OPERATOR`)
 - **`GET /api/v1/simulation/status`**
   - **Description**: Returns current simulation configuration, active seed, and generated record totals.
   - **Response 200 OK**:

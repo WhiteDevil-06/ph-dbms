@@ -57,3 +57,16 @@ class ResolutionStatus(str, Enum):
 class DataProvenance(str, Enum):
     SIMULATED = "SIMULATED"
     MANUAL_TEST = "MANUAL_TEST"
+
+
+class UserRole(str, Enum):
+    ADMIN = "ADMIN"
+    OPERATOR = "OPERATOR"
+
+
+class AuthAuditAction(str, Enum):
+    LOGIN_SUCCESS = "LOGIN_SUCCESS"
+    LOGIN_FAILED = "LOGIN_FAILED"
+    LOGOUT = "LOGOUT"
+    ACCESS_DENIED = "ACCESS_DENIED"
+    RATE_LIMITED = "RATE_LIMITED"

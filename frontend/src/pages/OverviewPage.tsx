@@ -29,6 +29,7 @@ import {
 } from "../components/Primitives";
 import { SimulationControls } from "../components/SimulationControls";
 import { getApiErrorMessage } from "../api/client";
+import { useAuth } from "../context/useAuth";
 import { useHealth, useSimulationStatus } from "../hooks/useSystem";
 import { useState } from "react";
 
@@ -42,6 +43,7 @@ const metrics = [
 
 export function OverviewPage() {
   const [controlsOpen, setControlsOpen] = useState(false);
+  const { user, isAdmin } = useAuth();
   const status = useSimulationStatus();
   const health = useHealth();
   const counts = status.data?.counts;
@@ -49,7 +51,11 @@ export function OverviewPage() {
   return (
     <>
       <PageHeader
-        description="A clear view of the current simulation dataset and backend availability."
+        description={
+          isAdmin
+            ? `Signed in as ${user?.full_name} (ADMIN) — full simulation generation, purge controls, and security audit access enabled.`
+            : `Signed in as ${user?.full_name} (OPERATOR) — monitoring and non-destructive simulation generation enabled; data purge & audit views require ADMIN.`
+        }
         title="Operations overview"
         actions={
           <>

@@ -9,6 +9,8 @@ from backend.app.models.enums import (
     EventType,
     ResolutionStatus,
     DataProvenance,
+    UserRole,
+    AuthAuditAction,
 )
 from backend.app.models.session import Session
 from backend.app.models.ai_model import AIModel
@@ -17,6 +19,7 @@ from backend.app.models.task import Task
 from backend.app.models.decision import Decision
 from backend.app.models.operation import Operation
 from backend.app.models.system_event import SystemEvent
+from backend.app.models.auth import AppUser, RevokedToken, AuthAuditLog
 
 __all__ = [
     "SessionStatus",
@@ -27,6 +30,8 @@ __all__ = [
     "EventType",
     "ResolutionStatus",
     "DataProvenance",
+    "UserRole",
+    "AuthAuditAction",
     "Session",
     "AIModel",
     "Device",
@@ -34,4 +39,7 @@ __all__ = [
     "Decision",
     "Operation",
     "SystemEvent",
+    "AppUser",
+    "RevokedToken",
+    "AuthAuditLog",
 ]

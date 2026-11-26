@@ -22,6 +22,7 @@ services:
       # Auto-executed in alphabetical order on first initialization
       - ./database/mysql/schema/01_baseline_schema.sql:/docker-entrypoint-initdb.d/01_baseline_schema.sql:ro
       - ./database/mysql/seed/01_devices_and_models_seed.sql:/docker-entrypoint-initdb.d/02_devices_and_models_seed.sql:ro
+      - ./database/mysql/migrations/02_auth_rbac_tables.sql:/docker-entrypoint-initdb.d/03_auth_rbac_tables.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -75,6 +76,8 @@ services:
       - MONGODB_URI=mongodb://${MONGODB_USER:-admin}:${MONGODB_PASSWORD:-adminpassword_local}@mongodb:27017/${MONGODB_DATABASE:-post_harvest_telemetry}?authSource=admin
       - DATA_SOURCE_MODE=SIMULATION
       - SIMULATION_DEFAULT_SEED=42
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-ph-dbms-local-dev-jwt-secret-key-change-in-production-0123456789}
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-480}
     ports:
       - "8000:8000"
     volumes:

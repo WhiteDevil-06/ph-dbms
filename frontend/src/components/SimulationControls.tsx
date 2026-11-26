@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { Lock } from "lucide-react";
 import { Alert, Dialog } from "./Primitives";
 import { getApiErrorMessage } from "../api/client";
+import { useAuth } from "../context/useAuth";
 import {
   useGenerateSimulation,
   useResetSimulation,
@@ -14,6 +16,7 @@ export function SimulationControls({
   open: boolean;
   onClose: () => void;
 }) {
+  const { isAdmin } = useAuth();
   const [seed, setSeed] = useState("42");
   const [scale, setScale] = useState<SimulationScale>("demo");
   const [resetFirst, setResetFirst] = useState(false);
@@ -33,10 +36,15 @@ export function SimulationControls({
     event.preventDefault();
     const parsedSeed = Number(seed);
     if (!Number.isSafeInteger(parsedSeed)) return;
-    generate.mutate({ seed: parsedSeed, scale, reset_first: resetFirst });
+    generate.mutate({
+      seed: parsedSeed,
+      scale,
+      reset_first: isAdmin ? resetFirst : false,
+    });
   };
 
   const confirmReset = () => {
+    if (!isAdmin) return;
     reset.mutate({ confirm_purge: true, purge_target: "SIMULATED_ONLY" });
   };
 
@@ -49,6 +57,14 @@ export function SimulationControls({
           title="Generate simulation dataset"
         >
           <form className="dialog-form" onSubmit={submitGeneration}>
+            {!isAdmin ? (
+              <Alert title="Operator access scope (RBAC)" variant="info">
+                Signed in as <strong>OPERATOR</strong>: non-destructive dataset generation is
+                enabled. Clearing existing records (<code>reset_first</code>) and purging simulated
+                data require the <strong>ADMIN</strong> role (enforced server-side with HTTP 403).
+              </Alert>
+            ) : null}
+
             <label className="field">
               <span>Random seed</span>
               <input
@@ -75,13 +91,24 @@ export function SimulationControls({
                 <option value="demo">Demo — presentation</option>
               </select>
             </label>
-            <label className="checkbox-field">
+            <label
+              className={`checkbox-field ${!isAdmin ? "checkbox-field--locked" : ""}`}
+              title={isAdmin ? undefined : "Requires ADMIN role"}
+            >
               <input
-                checked={resetFirst}
+                checked={isAdmin ? resetFirst : false}
+                disabled={!isAdmin}
                 onChange={(event) => setResetFirst(event.target.checked)}
                 type="checkbox"
               />
-              <span>Clear existing simulated records before generating</span>
+              <span>
+                Clear existing simulated records before generating
+                {!isAdmin ? (
+                  <span className="inline-lock-tag">
+                    <Lock size={11} aria-hidden="true" /> Admin only
+                  </span>
+                ) : null}
+              </span>
             </label>
             {generate.isError ? (
               <Alert title="Dataset generation failed">
@@ -104,13 +131,22 @@ export function SimulationControls({
                 </button>
               ) : (
                 <>
-                  <button
-                    className="reset-entry"
-                    onClick={() => setResetDialogOpen(true)}
-                    type="button"
-                  >
-                    Reset simulated dataset
-                  </button>
+                  {isAdmin ? (
+                    <button
+                      className="reset-entry"
+                      onClick={() => setResetDialogOpen(true)}
+                      type="button"
+                    >
+                      Reset simulated dataset
+                    </button>
+                  ) : (
+                    <span
+                      className="reset-entry reset-entry--locked"
+                      title="Purging simulated records requires the ADMIN role."
+                    >
+                      <Lock size={12} aria-hidden="true" /> Reset locked (Admin only)
+                    </span>
+                  )}
                   <button
                     className="button button--secondary"
                     onClick={closeAll}
@@ -131,7 +167,7 @@ export function SimulationControls({
           </form>
         </Dialog>
       ) : null}
-      {resetDialogOpen ? (
+      {resetDialogOpen && isAdmin ? (
         <Dialog
           description="This operation cannot be undone. It only targets records marked SIMULATED."
           onClose={closeAll}

@@ -1,88 +1,106 @@
-# Frontend Dashboard — React & TypeScript Web Application
-**Developer Owner**: Ramcharan (Frontend and Dashboard Developer)
+# PH-DBMS Operations Dashboard
 
----
+Responsive React dashboard for the post-harvest DBMS. The browser communicates
+only with the FastAPI gateway; it never connects directly to MySQL or MongoDB.
+All displayed operational data is clearly identified as simulated.
 
-## 1. Overview
-The frontend application is a modern, responsive web dashboard built using **React 18 / 19**, **TypeScript**, and **Vite**, styled with **Tailwind CSS**. It provides operational visibility, detection analysis, and task tracking for post-harvest material handling systems.
+## Technology
 
-### Critical Constraints:
-1. **Zero Direct DB Access**: Frontend code connects strictly to the FastAPI REST backend via HTTP/JSON. No database credentials or connection strings may exist in frontend code.
-2. **Persistent Simulation Banner**: Whenever simulated data is served, an unclosable banner must remain visible:
-   `[ SIMULATION DATA ACTIVE ] All records are generated from deterministic simulation models.`
-3. **Complete State UI**: All data components must provide loading skeletons, clean empty states, and descriptive error alerts.
+- React 18 and TypeScript
+- Vite and Tailwind CSS
+- React Router DOM
+- Axios
+- TanStack Query
+- Recharts and Lucide React
 
----
+## Setup
 
-## 2. Directory Structure
-```text
-frontend/
-├── src/
-│   ├── api/            # API client functions (fetch/axios) targeting FastAPI
-│   ├── assets/         # Static images, icons, and SVGs
-│   ├── components/     # Reusable UI widgets (cards, badges, tables, modals)
-│   ├── features/       # Feature-specific composite modules
-│   ├── hooks/          # Custom React & TanStack Query data hooks
-│   ├── layouts/        # Layout shell (Sidebar, Navbar, Simulation Banner)
-│   ├── pages/          # 9 Primary views (Overview, Sessions, Tasks, etc.)
-│   ├── routes/         # React Router route configuration
-│   ├── styles/         # Tailwind CSS entrypoint and custom utilities
-│   └── types/          # TypeScript interfaces matching backend Pydantic schemas
-├── package.json        # Dependencies and build scripts
-├── vite.config.ts      # Vite bundler configuration
-├── tailwind.config.js  # Tailwind CSS theme configuration
-└── README.md           # This documentation file
-```
+Requirements: Node.js 20+ and npm 10+.
 
----
+From the repository root, start the backend using the project's documented
+setup, then run:
 
-## 3. Local Development Setup (Windows 11)
-
-### Prerequisites:
-- Node.js LTS (v20+ or v24+ installed)
-- npm (v10+ installed)
-- Docker Desktop (for running the backend and databases)
-
-### Step 1: Start Backend Services (from Repository Root)
-```powershell
-# In the root repository directory, start MySQL, MongoDB, and FastAPI backend
-docker compose up -d
-
-# Verify backend health (returns {"status": "healthy"})
-curl http://localhost:8000/health
-```
-
-### Step 2: Initialize Vite Project / Install Dependencies
 ```powershell
 cd frontend
 npm install
-```
-
-### Step 3: Run Development Server
-```powershell
 npm run dev
 ```
-The dashboard will be accessible at: `http://localhost:5173`.
-Vite proxies `/api` and `/health` requests to `http://localhost:8000`.
 
----
+The Vite server runs at `http://localhost:5173`. Its development proxy forwards
+`/api` and `/health` to `http://localhost:8000`.
 
-## 4. Backend Endpoints Available for Frontend
-- **System Health**: `GET /health` (connectivity status for MySQL & MongoDB)
-- **Simulation Status**: `GET /api/v1/simulation/status` (current counts of sessions, tasks, detections)
-- **Generate Data**: `POST /api/v1/simulation/generate` (payload: `{"seed": 42, "scale": "demo", "reset_first": false}`)
-- **Reset Data**: `POST /api/v1/simulation/reset` (payload: `{"confirm_purge": true, "purge_target": "SIMULATED_ONLY"}`)
-- **Interactive API Documentation**: `http://localhost:8000/docs`
+## Commands
 
----
-
-## 5. Linting and Production Build
 ```powershell
-# Run ESLint
+npm run dev
+npm run typecheck
 npm run lint
-
-# Compile and bundle for production
 npm run build
+npm run preview
 ```
-Verify that the build executes with zero TypeScript compiler errors (`tsc --noEmit`).
 
+`npm run build` runs the TypeScript project build before Vite bundles the app.
+
+## API configuration and integration
+
+The Axios client uses relative URLs by default. To direct requests to another
+FastAPI origin, define `VITE_API_BASE_URL` in the frontend environment. Never
+put credentials or database connection strings in frontend environment files.
+
+Implemented by the backend and integrated by this frontend:
+
+| Method | Path | Frontend behavior |
+| --- | --- | --- |
+| `GET` | `/health` | Backend connectivity indicator, refreshed every 30 seconds |
+| `GET` | `/api/v1/simulation/status` | Dataset counts, mode, and seed; refreshed and invalidated after mutations |
+| `POST` | `/api/v1/simulation/generate` | Seed/scale/reset-first form with mutation feedback |
+| `POST` | `/api/v1/simulation/reset` | Explicit confirmation dialog; targets `SIMULATED_ONLY` |
+
+The following documented routes were **not implemented** in the inspected
+backend and are not requested by this frontend. Their views communicate pending
+integration and do not display fabricated records:
+
+- Sessions: `GET /api/v1/sessions`, `GET /api/v1/sessions/{session_id}`
+- Tasks: `GET /api/v1/tasks`, `GET /api/v1/tasks/{task_id}`
+- Detections: `GET /api/v1/detections`, `GET /api/v1/detections/{detection_id}`
+- Operations: `GET /api/v1/operations`
+- Decisions: `GET /api/v1/decisions`
+- System events: `GET /api/v1/system-events`, `PATCH /api/v1/system-events/{event_id}`
+- Analytics: `GET /api/v1/analytics/overview`, `/produce-classes`, `/operation-outcomes`
+- Equipment and models: `GET /api/v1/devices`, `GET /api/v1/models`
+
+The backend implementation was checked in `backend/app/main.py`; endpoint
+availability can change independently of this frontend.
+
+## Pages
+
+1. Overview / simulation status
+2. Sessions
+3. Tasks
+4. Detections
+5. Operations
+6. Decisions
+7. System events
+8. Analytics
+9. Equipment & models
+
+The Overview uses real health and simulation responses. All eight other views
+have their page-specific table, filter, chart, drawer/modal, or registry
+layouts ready for data. Until their corresponding backend routes exist, they
+show an explicit API-unavailable state, empty records, and disabled data-bound
+controls; they never show fabricated operational records. CSV export remains
+disabled pending approval. The persistent simulation banner and detections
+tracking notice are shown regardless of route.
+
+## Structure
+
+```text
+src/
+├── api/          # Axios client and FastAPI service functions
+├── components/   # Shared UI and simulation controls
+├── hooks/        # TanStack Query hooks
+├── layouts/      # Responsive dashboard shell
+├── pages/        # Overview and module integration-status pages
+├── styles/       # Global styles and Tailwind entrypoint
+└── types/        # Verified health and simulation response contracts
+```
